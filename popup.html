@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    /* "Dark Stealth" Design System */
+    body { 
+      width: 360px; 
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace; /* Tech font */
+      padding: 0; 
+      margin: 0; 
+      background-color: #121212; /* Deep Black/Charcoal */
+      color: #e0e0e0; 
+    }
+    
+    /* Header looks like a Terminal Bar */
+    .header { 
+      background-color: #1f1f1f; 
+      padding: 15px; 
+      border-bottom: 2px solid #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h2 { margin: 0; font-size: 16px; color: #4fc3f7; letter-spacing: 1px; }
+    .header .version { font-size: 10px; color: #666; border: 1px solid #333; padding: 2px 5px; border-radius: 3px; }
+
+    .container { padding: 20px; }
+
+    /* Tech-style Section Headers */
+    .section-title { 
+      color: #888; 
+      font-size: 11px; 
+      text-transform: uppercase; 
+      border-bottom: 1px solid #333; 
+      margin-top: 25px; 
+      margin-bottom: 10px; 
+      padding-bottom: 5px;
+      letter-spacing: 1px;
+    }
+    
+    label { 
+      font-size: 11px; 
+      color: #bbb; 
+      display: block; 
+      margin-bottom: 5px; 
+      margin-top: 12px; 
+    }
+
+    /* Inputs look like code blocks */
+    input, select, textarea { 
+      width: 100%; 
+      padding: 12px; 
+      background-color: #1e1e1e; 
+      border: 1px solid #333; 
+      color: #fff; 
+      font-family: inherit; /* Inherit monospace */
+      font-size: 13px;
+      box-sizing: border-box; 
+      transition: all 0.2s;
+    }
+    
+    /* Focus Effect: Glowing Blue Border */
+    input:focus, select:focus, textarea:focus { 
+      border-color: #4fc3f7; 
+      outline: none; 
+      background-color: #252525;
+      box-shadow: 0 0 5px rgba(79, 195, 247, 0.2); 
+    }
+
+    /* Grid Layout */
+    .row { display: flex; gap: 15px; }
+    .col { flex: 1; }
+
+    /* The "Power" Button */
+    button { 
+      width: 100%; 
+      margin-top: 25px; 
+      padding: 14px; 
+      background-color: #0277bd; /* Strong Tech Blue */
+      color: white; 
+      border: none; 
+      font-family: inherit;
+      font-weight: bold; 
+      text-transform: uppercase; 
+      letter-spacing: 1px;
+      cursor: pointer; 
+      transition: background 0.2s; 
+    }
+    button:hover { background-color: #01579b; }
+    button:active { transform: translateY(1px); }
+
+    .status { text-align: center; color: #00e676; font-size: 12px; margin-top: 10px; height: 15px; }
+  </style>
+</head>
+<body>
+  
+  <div class="header">
+    <h2>> AUTO_FILLER_V1</h2>
+    <span class="version">DEV</span>
+  </div>
+
+  <div class="container">
+    
+    <div class="section-title">01 // IDENTITY</div>
+    
+    <div class="row">
+      <div class="col">
+        <label>First Name</label>
+        <input type="text" id="fname" placeholder="Rishu">
+      </div>
+      <div class="col">
+        <label>Last Name</label>
+        <input type="text" id="lname" placeholder="Shukla">
+      </div>
+    </div>
+
+    <label>Email Address</label>
+    <input type="email" id="email" placeholder="rishu@example.com">
+
+    <div class="row">
+      <div class="col">
+        <label>Phone</label>
+        <input type="text" id="phone" placeholder="+91...">
+      </div>
+      <div class="col">
+        <label>Gender</label>
+        <select id="gender">
+          <option value="">Select...</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+
+    <label>Location</label>
+    <input type="text" id="address" placeholder="Mumbai, India">
+
+    <div class="section-title">02 // ACADEMICS</div>
+    
+    <label>University</label>
+    <input type="text" id="university" placeholder="Mumbai University">
+
+    <div class="row">
+      <div class="col">
+        <label>Degree</label>
+        <input type="text" id="degree" placeholder="B.E. Comp Sci">
+      </div>
+      <div class="col">
+        <label>Year</label>
+        <input type="text" id="gradYear" placeholder="2025">
+      </div>
+    </div>
+
+    <div class="section-title">03 // PORTFOLIO</div>
+
+    <label>LinkedIn</label>
+    <input type="text" id="linkedin">
+
+    <label>GitHub</label>
+    <input type="text" id="github">
+
+    <label>Resume Link</label>
+    <input type="text" id="resume" placeholder="Google Drive / Dropbox URL">
+
+    <label>Tech Stack (Comma Sep)</label>
+    <textarea id="skills" rows="2" placeholder="Python, SQL, AWS, Java..."></textarea>
+
+    <button id="saveBtn">INITIALIZE & SAVE</button>
+    <div id="status" class="status"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
