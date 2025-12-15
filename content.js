@@ -1,28 +1,35 @@
 // --- CONFIGURATION: The Keyword Dictionary ---
 const fieldMappings = {
-    fname:      ['first', 'fname', 'given', 'forename', 'legal_first'],
-    lname:      ['last', 'lname', 'surname', 'family', 'legal_last'],
-    fullname:   ['fullname', 'full_name', 'your_name', 'complete_name', 'name'],
-    email:      ['email', 'mail', 'e-mail'],
-    phone:      ['phone', 'mobile', 'cell', 'contact'],
-    address:    ['address', 'city', 'location', 'residence', 'street'],
-    
-    // NEW EDUCATION MAPPINGS
-    university: ['university', 'college', 'school', 'institute', 'institution', 'education'],
-    degree:     ['degree', 'major', 'specialization', 'qualification', 'course', 'stream'],
-    gradYear:   ['year', 'graduation', 'passing', 'batch', 'end_date'],
-
-    skills:     ['skill', 'technology', 'competency', 'tech_stack'],
-    gender:     ['gender', 'sex', 'identify'],
-    resume:     ['resume', 'cv', 'portfolio', 'file', 'upload'],
+    // 1. SPECIFIC LINKS (Unlikely to be confused)
     linkedin:   ['linkedin', 'linked', 'profile_url'],
-    github:     ['github', 'git', 'repo']
+    github:     ['github', 'git', 'repo'],
+    resume:     ['resume', 'cv', 'portfolio', 'file', 'upload'],
+    
+    // 2. EDUCATION (Specific terms)
+    university: ['university', 'college', 'school', 'institute', 'institution'],
+    degree:     ['degree', 'major', 'specialization', 'qualification', 'stream'],
+    gradYear:   ['graduation_year', 'grad_year', 'passing_year', 'year_of_passing', 'batch'],
+
+    // 3. PERSONAL NAMES (Check these BEFORE Email)
+    fname:      ['first_name', 'firstname', 'fname', 'given_name', 'forename'],
+    lname:      ['last_name', 'lastname', 'lname', 'surname', 'family_name'],
+    fullname:   ['full_name', 'fullname', 'your_name', 'complete_name'], 
+
+    // 4. CONTACT (Check Email LAST to prevent overwriting)
+    phone:      ['phone', 'mobile', 'cell', 'contact', 'whatsapp'],
+    email:      ['email', 'e-mail'], // Removed 'mail' to avoid "Mailing Address" confusion
+    
+    // 5. OTHERS
+    address:    ['address', 'city', 'location', 'residence', 'street'],
+    skills:     ['skill', 'technology', 'competency', 'tech_stack'],
 };
 
 let userData = {};
 
 // --- 1. STARTUP ---
-chrome.storage.local.get(Object.keys(fieldMappings), (data) => {
+const allKeys = Object.keys(fieldMappings).concat(['gender']); 
+
+chrome.storage.local.get(allKeys, (data) => {
     userData = data;
     startObserving();
 });
@@ -37,50 +44,74 @@ function startObserving() {
 function processPage() {
     if (!userData) return;
 
-    const inputs = document.querySelectorAll('input:not([data-autofilled]), textarea:not([data-autofilled])');
+    const inputs = document.querySelectorAll('input:not([data-autofilled]), textarea:not([data-autofilled]), select:not([data-autofilled])');
     
     inputs.forEach(input => {
         if (input.type === 'hidden' || input.type === 'file' || input.type === 'submit') return;
 
+        // RULE 0: If the browser explicitely says it's an Email field, fill it.
+        if (input.type === 'email') {
+            fillInput(input, userData.email);
+            return;
+        }
+
         const labelText = findLabelText(input);
         const description = `${input.id} ${input.name} ${input.placeholder} ${labelText}`.toLowerCase();
 
-        // 1. Check Education Fields
+        // PRIORITY ORDER (Crucial Fix)
+        
+        // 1. Check Links
+        if (checkMatch(input, description, fieldMappings.linkedin, userData.linkedin)) return;
+        if (checkMatch(input, description, fieldMappings.github, userData.github)) return;
+        if (checkMatch(input, description, fieldMappings.resume, userData.resume)) return;
+
+        // 2. Check Education
         if (checkMatch(input, description, fieldMappings.university, userData.university)) return;
         if (checkMatch(input, description, fieldMappings.degree, userData.degree)) return;
         if (checkMatch(input, description, fieldMappings.gradYear, userData.gradYear)) return;
 
-        // 2. Check Standard Fields
+        // 3. Check Names (Fix: Check Names BEFORE Email)
         if (checkMatch(input, description, fieldMappings.fname, userData.fname)) return;
         if (checkMatch(input, description, fieldMappings.lname, userData.lname)) return;
         if (checkMatch(input, description, fieldMappings.fullname, `${userData.fname} ${userData.lname}`)) return;
-        if (checkMatch(input, description, fieldMappings.email, userData.email)) return;
+
+        // 4. Check Phone & Address
         if (checkMatch(input, description, fieldMappings.phone, userData.phone)) return;
         if (checkMatch(input, description, fieldMappings.address, userData.address)) return;
+
+        // 5. Check Email (Fix: Check this late)
+        if (checkMatch(input, description, fieldMappings.email, userData.email)) return;
+        
+        // 6. Others
         if (checkMatch(input, description, fieldMappings.skills, userData.skills)) return;
-        if (checkMatch(input, description, fieldMappings.linkedin, userData.linkedin)) return;
-        if (checkMatch(input, description, fieldMappings.github, userData.github)) return;
-        if (checkMatch(input, description, fieldMappings.resume, userData.resume)) return;
     });
 }
 
 // --- 3. HELPER FUNCTIONS ---
 function findLabelText(input) {
     let text = "";
+    // Google Forms
     if (input.getAttribute('aria-labelledby')) {
         input.getAttribute('aria-labelledby').split(' ').forEach(id => {
             const el = document.getElementById(id);
             if (el) text += " " + el.innerText;
         });
     }
+    // Standard Label
     if (input.id) {
         const label = document.querySelector(`label[for="${input.id}"]`);
         if (label) text += " " + label.innerText;
     }
+    // Accessibility Label
     if (input.getAttribute('aria-label')) text += " " + input.getAttribute('aria-label');
+    
+    // Parent Text (Be careful with this)
     if (input.parentElement) {
         text += " " + input.parentElement.innerText;
-        if (input.parentElement.parentElement) text += " " + input.parentElement.parentElement.innerText;
+        // Only check grandparent if parent text is very short (prevents grabbing whole page text)
+        if (input.parentElement.innerText.length < 50 && input.parentElement.parentElement) {
+             text += " " + input.parentElement.parentElement.innerText;
+        }
     }
     return text;
 }
@@ -89,13 +120,17 @@ function checkMatch(input, textString, keywords, value) {
     if (!value) return false;
     const found = keywords.some(key => textString.includes(key));
     if (found) {
-        input.value = value;
-        input.setAttribute('data-autofilled', 'true');
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        input.dispatchEvent(new Event('focus', { bubbles: true }));
-        input.dispatchEvent(new Event('blur', { bubbles: true }));
+        fillInput(input, value);
         return true;
     }
     return false;
+}
+
+function fillInput(input, value) {
+    input.value = value;
+    input.setAttribute('data-autofilled', 'true');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    input.dispatchEvent(new Event('focus', { bubbles: true }));
+    input.dispatchEvent(new Event('blur', { bubbles: true }));
 }
